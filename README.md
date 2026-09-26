@@ -205,8 +205,12 @@ Once the application is running (`http://localhost:8080`):
 
 ---
 
-## Architecture & Extension Guide
-For rapid module onboarding, domain entity creation, and N-Tier extension procedures, see the [Developer Architecture Guide](docs/developer_architecture_guide.md).
+## Technical Documentation & Engineering Transparency
+
+For architectural specifications, domain entity modeling, and testing procedures:
+- [Technical Documentation Index](docs/README.md): Master catalog of architecture and governance specifications.
+- [Domain Extensibility & Architecture Runbook](docs/ARCHITECTURE_AND_EXTENSIBILITY_GUIDE.md): Developer runbook for rapid module modeling, DTOs, Bean Validation, and dual-persistence implementation.
+- [API Contract Verification & Testing Guide](docs/API_TESTING_AND_VERIFICATION_GUIDE.md): Complete testing procedures with Thunder Client, VS Code REST Client (`docs/api-contracts.http`), and cURL.
 
 ---
 

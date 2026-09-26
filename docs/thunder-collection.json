@@ -1,0 +1,176 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "Enterprise Web Solutions - Modular REST API Collection",
+  "collectionId": "enterprise-web-solutions-collection",
+  "dateExported": "2026-09-26",
+  "version": "1.1",
+  "folders": [
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "1. Health & System Metrics",
+      "sortNum": 10000,
+      "_id": "folder_salud"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "2. Security & Stateless JWT",
+      "sortNum": 20000,
+      "_id": "folder_auth"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "3. Clinical Domain - Patients",
+      "sortNum": 30000,
+      "_id": "folder_pacientes"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "4. Low-Level EntityManager Repository",
+      "sortNum": 40000,
+      "_id": "folder_legacy"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "5. Inventory Domain - Products",
+      "sortNum": 50000,
+      "_id": "folder_productos"
+    }
+  ],
+  "requests": [
+    {
+      "_id": "req_saludo",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_salud",
+      "name": "GET Health Status Simple",
+      "url": "http://localhost:8080/api/saludo",
+      "method": "GET",
+      "sortNum": 10000
+    },
+    {
+      "_id": "req_saludo_detallado",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_salud",
+      "name": "GET Health Status Detailed",
+      "url": "http://localhost:8080/api/saludo/detallado",
+      "method": "GET",
+      "sortNum": 10010
+    },
+    {
+      "_id": "req_auth_login",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_auth",
+      "name": "POST Login JWT (admin / admin123)",
+      "url": "http://localhost:8080/api/auth/login",
+      "method": "POST",
+      "sortNum": 20010,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+      }
+    },
+    {
+      "_id": "req_pacientes_listar",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_pacientes",
+      "name": "GET List Patients (JpaRepository)",
+      "url": "http://localhost:8080/api/pacientes",
+      "method": "GET",
+      "sortNum": 30010
+    },
+    {
+      "_id": "req_pacientes_crear",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_pacientes",
+      "name": "POST Create Patient (Standard Case)",
+      "url": "http://localhost:8080/api/pacientes",
+      "method": "POST",
+      "sortNum": 30020,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"dni\": \"12345678\",\n  \"nombre\": \"Orlando\",\n  \"apellido\": \"Dorival\",\n  \"edad\": 67,\n  \"nivelHemoglobina\": 67.6\n}"
+      }
+    },
+    {
+      "_id": "req_pacientes_anemia",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_pacientes",
+      "name": "GET Filter Clinical Condition (JPQL Param)",
+      "url": "http://localhost:8080/api/pacientes/anemia",
+      "method": "GET",
+      "sortNum": 30030
+    },
+    {
+      "_id": "req_pacientes_invalid",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_pacientes",
+      "name": "POST Test Bean Validation (400 Bad Request)",
+      "url": "http://localhost:8080/api/pacientes",
+      "method": "POST",
+      "sortNum": 30040,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"dni\": \"\",\n  \"nombre\": \"\",\n  \"apellido\": \"\",\n  \"edad\": -5,\n  \"nivelHemoglobina\": -2.0\n}"
+      }
+    },
+    {
+      "_id": "req_legacy_listar",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_legacy",
+      "name": "GET List Patients via EntityManager",
+      "url": "http://localhost:8080/api/legacy/pacientes",
+      "method": "GET",
+      "sortNum": 40010
+    },
+    {
+      "_id": "req_legacy_crear",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_legacy",
+      "name": "POST Persist via EntityManager",
+      "url": "http://localhost:8080/api/legacy/pacientes",
+      "method": "POST",
+      "sortNum": 40020,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"dni\": \"79887766\",\n  \"nombre\": \"Pedro\",\n  \"apellido\": \"Castro\",\n  \"edad\": 2,\n  \"nivelHemoglobina\": 11.8\n}"
+      }
+    },
+    {
+      "_id": "req_productos_listar",
+      "colId": "enterprise-web-solutions-collection",
+      "containerId": "folder_productos",
+      "name": "GET List Products (Inventory)",
+      "url": "http://localhost:8080/api/productos",
+      "method": "GET",
+      "sortNum": 50010
+    }
+  ]
+}

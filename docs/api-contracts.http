@@ -1,0 +1,134 @@
+### ==============================================================================
+### REST CLIENT HTTP SPECIFICATION & CONTRACT VERIFICATION SUITE
+### Enterprise Web Solutions & Distributed Backend Architecture
+### Compatible with VS Code REST Client, Thunder Client and IntelliJ HTTP Client
+### ==============================================================================
+
+@baseUrl = http://localhost:8080
+
+### 1. HEALTH CHECK: Estado simple del Backend (200 OK)
+GET {{baseUrl}}/api/saludo
+Accept: text/plain
+
+### 2. HEALTH CHECK: Estado detallado con alineación de infraestructura (200 OK)
+GET {{baseUrl}}/api/saludo/detallado
+Accept: application/json
+
+### 3. AUTH: Autenticación Stateless JWT (Generación de Bearer Token)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Extraer token de la respuesta anterior
+@authToken = {{login.response.body.token}}
+
+### ==============================================================================
+### DOMAIN MODULE 1: CLINICAL HEALTH RECORD & HEMATOLOGY (SPRING DATA JPA)
+### ==============================================================================
+
+### 4. PACIENTES: Listar todos los registros (Calcula @Transient estadoAnemia)
+GET {{baseUrl}}/api/pacientes
+Accept: application/json
+
+### 5. PACIENTES: Registrar nuevo paciente válido (Caso estándar -> 201 Created)
+POST {{baseUrl}}/api/pacientes
+Content-Type: application/json
+
+{
+  "dni": "12345678",
+  "nombre": "Orlando",
+  "apellido": "Dorival",
+  "edad": 67,
+  "nivelHemoglobina": 67.6
+}
+
+### 6. PACIENTES: Registrar paciente con condición específica (< 11.0 g/dL -> 201 Created)
+POST {{baseUrl}}/api/pacientes
+Content-Type: application/json
+
+{
+  "dni": "75432109",
+  "nombre": "Elena",
+  "apellido": "Vargas",
+  "edad": 3,
+  "nivelHemoglobina": 10.4
+}
+
+### 7. PACIENTES: Filtrar registros por condición (Consulta JPQL parametrizada)
+GET {{baseUrl}}/api/pacientes/anemia
+Accept: application/json
+
+### 8. PACIENTES: Probar validación Bean Validation (400 Bad Request estructurado)
+POST {{baseUrl}}/api/pacientes
+Content-Type: application/json
+
+{
+  "dni": "123",
+  "nombre": "",
+  "apellido": "",
+  "edad": -5,
+  "nivelHemoglobina": -2.0
+}
+
+### 9. PACIENTES: Buscar por ID
+GET {{baseUrl}}/api/pacientes/1
+Accept: application/json
+
+### 10. PACIENTES: Eliminar por ID (204 No Content)
+DELETE {{baseUrl}}/api/pacientes/4
+
+### ==============================================================================
+### LOW-LEVEL PERSISTENCE SPECIFICATION: DIRECT ENTITYMANAGER REPOSITORY
+### ==============================================================================
+
+### 11. ENTITYMANAGER: Listar entidades vía EntityManager directo
+GET {{baseUrl}}/api/legacy/pacientes
+Accept: application/json
+
+### 12. ENTITYMANAGER: Guardar entidad vía em.persist()
+POST {{baseUrl}}/api/legacy/pacientes
+Content-Type: application/json
+
+{
+  "dni": "79887766",
+  "nombre": "Pedro",
+  "apellido": "Castro",
+  "edad": 2,
+  "nivelHemoglobina": 11.8
+}
+
+### ==============================================================================
+### DOMAIN MODULE 2: INVENTORY & LOGISTICS MANAGEMENT
+### ==============================================================================
+
+### 13. PRODUCTOS: Listar catálogo completo
+GET {{baseUrl}}/api/productos
+Accept: application/json
+
+### 14. PRODUCTOS: Filtrar por umbral de inventario (@NamedQuery declarativa)
+GET {{baseUrl}}/api/productos/stock?minimo=5
+Accept: application/json
+
+### ==============================================================================
+### DOMAIN MODULE 3: EXTENSIBLE GENERIC DOMAIN SPECIFICATION
+### ==============================================================================
+
+### 15. ITEMS GENÉRICOS: Listar entidades de dominio extensible
+GET {{baseUrl}}/api/items
+Accept: application/json
+
+### 16. ITEMS GENÉRICOS: Registrar nueva entidad de dominio extensible (201 Created)
+POST {{baseUrl}}/api/items
+Content-Type: application/json
+
+{
+  "codigoIdentificador": "ACT-500",
+  "denominacion": "Servidor Blade Dell PowerEdge",
+  "valorNumericoPrincipal": 4500.0,
+  "cantidadEntera": 2
+}
