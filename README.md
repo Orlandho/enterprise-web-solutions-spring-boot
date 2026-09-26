@@ -12,101 +12,85 @@
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 The system implements a strictly decoupled N-Tier architecture designed for maximum maintainability, testability, and enterprise scalability:
 
-```mermaid
-flowchart TD
-    subgraph ClientLayer ["Presentation & Client Layer"]
-        Browser["Web Client / SPA<br/>(Angular / Plain HTML / React)"]
-        CurlClient["CLI & Automation Clients<br/>(cURL / Postman / CI Runners)"]
-    end
-
-    subgraph SecurityLayer ["Security & Interception Layer"]
-        CORS["CORS Filter<br/>(Allowed Origins & Pre-flight OPTIONS)"]
-        SecFilter["SecurityFilterChain<br/>(Stateless Session / CSRF Disabled)"]
-    end
-
-    subgraph ControllerLayer ["REST Controller Layer (@RestController)"]
-        HealthCtrl["SaludController (/api/saludo)"]
-        AuthCtrl["AuthController (/api/auth)"]
-        PacCtrl["PacienteController (/api/pacientes)"]
-        ProdCtrl["ProductoController (/api/productos)"]
-        ItemCtrl["ItemGenericoController (/api/items)"]
-        LegacyCtrl["LegacyEntityManagerController (/api/legacy)"]
-        AdvHandler["GlobalExceptionHandler (@RestControllerAdvice)"]
-    end
-
-    subgraph ServiceLayer ["Business Logic & GoF Patterns Layer (@Service)"]
-        PacServ["PacienteServiceImpl (@Transactional)"]
-        ProdServ["ProductoServiceImpl (@Transactional)"]
-        ItemServ["ItemGenericoServiceImpl (@Transactional)"]
-        Factory["ServiceFactory (GoF Factory Pattern)"]
-    end
-
-    subgraph PersistenceLayer ["Dual Persistence Layer"]
-        subgraph SpringData ["Declarative Strategy (Spring Data JPA)"]
-            RepoPac["PacienteRepository (JpaRepository + JPQL)"]
-            RepoProd["ProductoRepository (JpaRepository + @NamedQuery)"]
-            RepoItem["ItemGenericoRepository (JpaRepository)"]
-        end
-        subgraph ManualEM ["Low-Level Control Strategy (JPA EntityManager)"]
-            EMRepoPac["PacienteEntityManagerRepository (@PersistenceContext)"]
-            EMRepoProd["ProductoEntityManagerRepository (@PersistenceContext)"]
-        end
-    end
-
-    subgraph StorageLayer ["Relational Storage Tier"]
-        H2DB[("H2 Database<br/>In-Memory Default (Zero Setup)")]
-        MySQLDB[("MySQL 8.x<br/>Relational Production")]
-    end
-
-    Browser --> CORS
-    CurlClient --> CORS
-    CORS --> SecFilter
-    SecFilter --> ControllerLayer
-    ControllerLayer -.-> AdvHandler
-    ControllerLayer --> ServiceLayer
-    ServiceLayer --> PersistenceLayer
-    SpringData --> StorageLayer
-    ManualEM --> StorageLayer
+```text
++---------------------------------------------------------------------------------+
+| Presentation & Client Layer (Browser / cURL / Postman / Automated Clients)     |
++---------------------------------------------------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+| Security & Filter Layer (CORS Filter / SecurityFilterChain Stateless)          |
++---------------------------------------------------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+| REST Controller Layer (@RestController)                                         |
+| - SaludController (/api/saludo)         - AuthController (/api/auth)            |
+| - PacienteController (/api/pacientes)   - ProductoController (/api/productos)  |
+| - ItemGenericoController (/api/items)   - LegacyEntityManagerController         |
+| - GlobalExceptionHandler (@RestControllerAdvice)                                |
++---------------------------------------------------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+| Service Layer (@Service - GoF Patterns, Validation & Business Logic)            |
+| - PacienteServiceImpl                   - ProductoServiceImpl                   |
+| - ItemGenericoServiceImpl               - ServiceFactory (GoF Factory Pattern)  |
++---------------------------------------------------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+| Dual Persistence Layer                                                          |
+| [Spring Data JPA Interfaces]             [Low-Level EntityManager Repository]   |
+| - PacienteRepository (JPQL :param)       - PacienteEntityManagerRepository      |
+| - ProductoRepository (@NamedQuery)       - ProductoEntityManagerRepository      |
+| - ItemGenericoRepository                                                        |
++---------------------------------------------------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+| Relational Storage Tier (H2 In-Memory Default / MySQL Relational Profile)       |
++---------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 🚀 Key Architectural Highlights
+## Key Architectural Highlights
 
 1. **Dual Persistence Capabilities:**
-   - **High-Productivity Layer:** `JpaRepository<T, ID>` with derived query methods, parameterized JPQL (`@Query` with `@Param`), and declarative `@NamedQuery`.
-   - **Low-Level Control Layer:** Dedicated `@Repository` classes using `EntityManager` directly (`persist()`, `find()`, `merge()`, `remove()`, `createQuery()`) for custom lifecycle hooks and high-performance transactional manipulation.
+ - **High-Productivity Layer:** `JpaRepository<T, ID>` with derived query methods, parameterized JPQL (`@Query` with `@Param`), and declarative `@NamedQuery`.
+ - **Low-Level Control Layer:** Dedicated `@Repository` classes using `EntityManager` directly (`persist()`, `find()`, `merge()`, `remove()`, `createQuery()`) for custom lifecycle hooks and high-performance transactional manipulation.
 2. **Dynamic In-Memory Computations (`@Transient`):**
-   - Business calculations are decoupled from the physical database schema. Computed values (`estadoAnemia`, `estadoStock`, `clasificacionCalculada`) are evaluated on runtime demand and seamlessly serialized into JSON output.
+ - Business calculations are decoupled from the physical database schema. Computed values (`estadoAnemia`, `estadoStock`, `clasificacionCalculada`) are evaluated on runtime demand and seamlessly serialized into JSON output.
 3. **Robust Declarative Validation:**
-   - Input payloads are rigorously validated using Bean Validation (`@Valid`, `@NotNull`, `@NotBlank`, `@Size`, `@DecimalMin`, `@Min`, `@Max`).
-   - Validation failures are intercepted globally by `@RestControllerAdvice`, returning RFC-compliant structured JSON:
-     ```json
-     {
-       "timestamp": "2026-09-25T23:50:00",
-       "status": 400,
-       "error": "Bad Request",
-       "message": "Error de validación en los campos enviados en la solicitud",
-       "path": "/api/productos",
-       "fieldErrors": {
-         "nombre": "El nombre debe tener entre 2 y 100 caracteres",
-         "precio": "El precio debe ser mayor a 0"
-       }
-     }
-     ```
+ - Input payloads are rigorously validated using Bean Validation (`@Valid`, `@NotNull`, `@NotBlank`, `@Size`, `@DecimalMin`, `@Min`, `@Max`).
+ - Validation failures are intercepted globally by `@RestControllerAdvice`, returning RFC-compliant structured JSON:
+ ```json
+ {
+ "timestamp": "2026-09-25T23:50:00",
+ "status": 400,
+ "error": "Bad Request",
+ "message": "Error de validación en los campos enviados en la solicitud",
+ "path": "/api/productos",
+ "fieldErrors": {
+ "nombre": "El nombre debe tener entre 2 y 100 caracteres",
+ "precio": "El precio debe ser mayor a 0"
+ }
+ }
+ ```
 4. **Stateless Security & Cross-Origin Resource Sharing (CORS):**
-   - Stateless JWT emission and authentication via `/api/auth/login`.
-   - Pre-flight `OPTIONS` handling and full CORS permissions for frontends (e.g., Angular on `http://localhost:4200`).
+ - Stateless JWT emission and authentication via `/api/auth/login`.
+ - Pre-flight `OPTIONS` handling and full CORS permissions for frontends (e.g., Angular on `http://localhost:4200`).
 5. **Interactive UI Verification Console:**
-   - Embedded native HTML verification dashboard accessible at `http://localhost:8080/index.html` allowing real-time CRUD testing and validation feedback without external client software.
+ - Embedded native HTML verification dashboard accessible at `http://localhost:8080/index.html` allowing real-time CRUD testing and validation feedback without external client software.
 
 ---
 
-## 📖 API Contract Catalog
+## API Contract Catalog
 
 | Method | Endpoint | Description | Status Code |
 | :--- | :--- | :--- | :---: |
@@ -131,7 +115,7 @@ flowchart TD
 
 ---
 
-## 🛠️ Developer Runbook & CLI Cheat Sheet
+## Developer Runbook & CLI Cheat Sheet
 
 ### 1. Environment Verification
 ```powershell
@@ -198,13 +182,13 @@ curl.exe -i http://localhost:8080/api/productos
 
 # 3. Create valid product (201 Created)
 curl.exe -i -X POST http://localhost:8080/api/productos `
-  -H "Content-Type: application/json" `
-  -d '{"codigo":"PROD-TEST","nombre":"Monitor 4K OLED","precio":1200.0,"stock":8,"categoria":"Monitores"}'
+ -H "Content-Type: application/json" `
+ -d '{"codigo":"PROD-TEST","nombre":"Monitor 4K OLED","precio":1200.0,"stock":8,"categoria":"Monitores"}'
 
 # 4. Trigger Bean Validation failure (400 Bad Request)
 curl.exe -i -X POST http://localhost:8080/api/productos `
-  -H "Content-Type: application/json" `
-  -d '{"codigo":"","nombre":"","precio":-10.0,"stock":-2,"categoria":""}'
+ -H "Content-Type: application/json" `
+ -d '{"codigo":"","nombre":"","precio":-10.0,"stock":-2,"categoria":""}'
 
 # 5. Query non-existent ID (404 Not Found)
 curl.exe -i http://localhost:8080/api/productos/99999
@@ -212,7 +196,7 @@ curl.exe -i http://localhost:8080/api/productos/99999
 
 ---
 
-## 🌐 Interactive Interfaces
+## Interactive Interfaces
 
 Once the application is running (`http://localhost:8080`):
 - **Native Test Console:** [http://localhost:8080/index.html](http://localhost:8080/index.html)
@@ -221,10 +205,10 @@ Once the application is running (`http://localhost:8080`):
 
 ---
 
-## 📚 Architecture & Extension Guide
+## Architecture & Extension Guide
 For rapid module onboarding, domain entity creation, and N-Tier extension procedures, see the [Developer Architecture Guide](docs/developer_architecture_guide.md).
 
 ---
 
-## 📄 License
+## License
 This project is licensed under the terms of the [MIT License](LICENSE).

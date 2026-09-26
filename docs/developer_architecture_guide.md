@@ -1,40 +1,37 @@
 # Guía de Extensión Rápida y Arquitectura de Módulos (Developer Guide)
 
-> **Documento Técnico de Referencia Interna:**  
+> **Documento Técnico de Referencia Interna:** 
 > Esta guía detalla el flujo de trabajo en cascada, convenciones de diseño y patrones de persistencia dual implementados en el motor backend **Enterprise Web Solutions & Distributed Backend Engine**. Permite a cualquier desarrollador incorporar nuevos módulos o entidades de negocio en menos de 5 a 10 minutos cumpliendo estrictamente los estándares de arquitectura N-Capas.
 
 ---
 
-## 🧭 1. Estrategia de Incorporación Rápida de Nuevos Módulos
+## 1. Estrategia de Incorporación Rápida de Nuevos Módulos
 
 El proyecto incluye una plantilla base completamente desacoplada (`ItemGenerico`) diseñada para clonar o adaptar cualquier modelo de dominio en cuestión de minutos mediante la herramienta de refactorización de símbolos del IDE:
 
 ### Procedimiento de Adaptación con Refactorización de Símbolos (`F2`):
 1. **Modelo de Dominio:** Abrir `src/main/java/pe/upn/sist1402a/model/ItemGenerico.java`.
-   - Seleccionar la clase `ItemGenerico`, presionar `F2` (Rename Symbol) y renombrarla a la nueva entidad (ej. `Vehiculo`, `Cita`, `Activo`). El IDE actualizará automáticamente el nombre de la clase, el nombre de archivo y todas las importaciones del proyecto.
-   - Renombrar los atributos según las necesidades del dominio:
-     - `codigoIdentificador` -> `codigo` o `placa`
-     - `denominacion` -> `descripcion` o `nombre`
-     - `valorNumericoPrincipal` -> `monto`, `precio` o `kilometraje`
-     - `cantidadEntera` -> `capacidad` o `stock`
-     - `clasificacionCalculada` -> regla de negocio dinámica `@Transient`.
+ - Seleccionar la clase `ItemGenerico`, presionar `F2` (Rename Symbol) y renombrarla a la nueva entidad (ej. `Vehiculo`, `Cita`, `Activo`). El IDE actualizará automáticamente el nombre de la clase, el nombre de archivo y todas las importaciones del proyecto.
+ - Renombrar los atributos según las necesidades del dominio:
+ - `codigoIdentificador` -> `codigo` o `placa`
+ - `denominacion` -> `descripcion` o `nombre`
+ - `valorNumericoPrincipal` -> `monto`, `precio` o `kilometraje`
+ - `cantidadEntera` -> `capacidad` o `stock`
+ - `clasificacionCalculada` -> regla de negocio dinámica `@Transient`.
 2. **Objeto de Transferencia de Datos:** Abrir `src/main/java/pe/upn/sist1402a/dto/ItemGenericoDto.java` y aplicar el mismo procedimiento `F2`.
 3. **Capa de Persistencia y Lógica:** Los repositorios, servicios y controladores asociados (`ItemGenericoRepository`, `ItemGenericoService`, `ItemGenericoController`) se actualizarán de forma coordinada.
 
 ---
 
-## ⚡ 2. El Flujo de Construcción en Cascada (De la BD al Controlador)
+## 2. El Flujo de Construcción en Cascada (De la BD al Controlador)
 
 Cuando se implementa una nueva entidad desde cero, se debe seguir estrictamente este orden cronológico y unidireccional:
 
-```mermaid
-flowchart LR
-    M["1. Model (@Entity)"] --> D["2. DTO (@Valid)"]
-    D --> R["3. Repository (JPA / EM)"]
-    R --> S["4. Service (@Service)"]
-    S --> C["5. Controller (@RestController)"]
-    C --> Q["6. data.sql (Semillas)"]
-    Q --> T["7. Verificación (cURL / Web)"]
+```text
+[1. Model (@Entity)] -> [2. DTO (@Valid)] -> [3. Repository (JPA/EM)] -> [4. Service (@Service)]
+ |
+ v
+[7. Verificacion] <- [6. data.sql] <- [5. Controller (@RestController)]
 ```
 
 ---
@@ -51,62 +48,62 @@ import jakarta.persistence.*;
 @Table(name = "pacientes")
 public class Paciente {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+ @Id
+ @GeneratedValue(strategy = GenerationType.IDENTITY)
+ private Long id;
 
-    @Column(nullable = false, length = 8, unique = true)
-    private String dni;
+ @Column(nullable = false, length = 8, unique = true)
+ private String dni;
 
-    @Column(nullable = false, length = 60)
-    private String nombre;
+ @Column(nullable = false, length = 60)
+ private String nombre;
 
-    @Column(nullable = false, length = 60)
-    private String apellido;
+ @Column(nullable = false, length = 60)
+ private String apellido;
 
-    @Column(nullable = false)
-    private Integer edad;
+ @Column(nullable = false)
+ private Integer edad;
 
-    @Column(nullable = false)
-    private Double nivelHemoglobina;
+ @Column(nullable = false)
+ private Double nivelHemoglobina;
 
-    // Campo calculado dinámico en memoria (NO se almacena en la tabla)
-    @Transient
-    private String estadoAnemia;
+ // Campo calculado dinámico en memoria (NO se almacena en la tabla)
+ @Transient
+ private String estadoAnemia;
 
-    // Constructor sin argumentos obligatorio para JPA y Jackson
-    public Paciente() {}
+ // Constructor sin argumentos obligatorio para JPA y Jackson
+ public Paciente() {}
 
-    public Paciente(Long id, String dni, String nombre, String apellido, Integer edad, Double nivelHemoglobina) {
-        this.id = id;
-        this.dni = dni;
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.edad = edad;
-        this.nivelHemoglobina = nivelHemoglobina;
-    }
+ public Paciente(Long id, String dni, String nombre, String apellido, Integer edad, Double nivelHemoglobina) {
+ this.id = id;
+ this.dni = dni;
+ this.nombre = nombre;
+ this.apellido = apellido;
+ this.edad = edad;
+ this.nivelHemoglobina = nivelHemoglobina;
+ }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getDni() { return dni; }
-    public void setDni(String dni) { this.dni = dni; }
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
-    public Integer getEdad() { return edad; }
-    public void setEdad(Integer edad) { this.edad = edad; }
-    public Double getNivelHemoglobina() { return nivelHemoglobina; }
-    public void setNivelHemoglobina(Double nivelHemoglobina) { this.nivelHemoglobina = nivelHemoglobina; }
+ public Long getId() { return id; }
+ public void setId(Long id) { this.id = id; }
+ public String getDni() { return dni; }
+ public void setDni(String dni) { this.dni = dni; }
+ public String getNombre() { return nombre; }
+ public void setNombre(String nombre) { this.nombre = nombre; }
+ public String getApellido() { return apellido; }
+ public void setApellido(String apellido) { this.apellido = apellido; }
+ public Integer getEdad() { return edad; }
+ public void setEdad(Integer edad) { this.edad = edad; }
+ public Double getNivelHemoglobina() { return nivelHemoglobina; }
+ public void setNivelHemoglobina(Double nivelHemoglobina) { this.nivelHemoglobina = nivelHemoglobina; }
 
-    public String getEstadoAnemia() {
-        if (this.nivelHemoglobina == null) return "SIN_DATOS";
-        return this.nivelHemoglobina < 11.0 ? "ANEMIA" : "NORMAL";
-    }
+ public String getEstadoAnemia() {
+ if (this.nivelHemoglobina == null) return "SIN_DATOS";
+ return this.nivelHemoglobina < 11.0 ? "ANEMIA" : "NORMAL";
+ }
 
-    public void setEstadoAnemia(String estadoAnemia) {
-        this.estadoAnemia = estadoAnemia;
-    }
+ public void setEstadoAnemia(String estadoAnemia) {
+ this.estadoAnemia = estadoAnemia;
+ }
 }
 ```
 
@@ -122,31 +119,31 @@ import jakarta.validation.constraints.*;
 
 public class PacienteDto {
 
-    @NotBlank(message = "El DNI es obligatorio")
-    @Size(min = 8, max = 8, message = "El DNI debe contener exactamente 8 dígitos")
-    private String dni;
+ @NotBlank(message = "El DNI es obligatorio")
+ @Size(min = 8, max = 8, message = "El DNI debe contener exactamente 8 dígitos")
+ private String dni;
 
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(min = 2, max = 60, message = "El nombre debe tener entre 2 y 60 caracteres")
-    private String nombre;
+ @NotBlank(message = "El nombre es obligatorio")
+ @Size(min = 2, max = 60, message = "El nombre debe tener entre 2 y 60 caracteres")
+ private String nombre;
 
-    @NotBlank(message = "El apellido es obligatorio")
-    @Size(min = 2, max = 60, message = "El apellido debe tener entre 2 y 60 caracteres")
-    private String apellido;
+ @NotBlank(message = "El apellido es obligatorio")
+ @Size(min = 2, max = 60, message = "El apellido debe tener entre 2 y 60 caracteres")
+ private String apellido;
 
-    @NotNull(message = "La edad es obligatoria")
-    @Min(value = 0, message = "La edad no puede ser menor a 0")
-    @Max(value = 120, message = "La edad no puede ser mayor a 120")
-    private Integer edad;
+ @NotNull(message = "La edad es obligatoria")
+ @Min(value = 0, message = "La edad no puede ser menor a 0")
+ @Max(value = 120, message = "La edad no puede ser mayor a 120")
+ private Integer edad;
 
-    @NotNull(message = "El nivel de hemoglobina es obligatorio")
-    @DecimalMin(value = "1.0", message = "El nivel de hemoglobina debe ser al menos 1.0")
-    @DecimalMax(value = "25.0", message = "El nivel de hemoglobina no puede superar 25.0")
-    private Double nivelHemoglobina;
+ @NotNull(message = "El nivel de hemoglobina es obligatorio")
+ @DecimalMin(value = "1.0", message = "El nivel de hemoglobina debe ser al menos 1.0")
+ @DecimalMax(value = "25.0", message = "El nivel de hemoglobina no puede superar 25.0")
+ private Double nivelHemoglobina;
 
-    public PacienteDto() {}
+ public PacienteDto() {}
 
-    // Getters y Setters estándar...
+ // Getters y Setters estándar...
 }
 ```
 
@@ -169,11 +166,11 @@ import java.util.Optional;
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
 
-    Optional<Paciente> findByDni(String dni);
+ Optional<Paciente> findByDni(String dni);
 
-    // Consulta JPQL parametrizada segura contra inyección SQL
-    @Query("SELECT p FROM Paciente p WHERE p.nivelHemoglobina < :limite")
-    List<Paciente> buscarConHemoglobinaMenorA(@Param("limite") Double limite);
+ // Consulta JPQL parametrizada segura contra inyección SQL
+ @Query("SELECT p FROM Paciente p WHERE p.nivelHemoglobina < :limite")
+ List<Paciente> buscarConHemoglobinaMenorA(@Param("limite") Double limite);
 }
 ```
 
@@ -193,28 +190,28 @@ import java.util.Optional;
 @Transactional
 public class PacienteEntityManagerRepository {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+ @PersistenceContext
+ private EntityManager entityManager;
 
-    public Paciente guardar(Paciente paciente) {
-        if (paciente.getId() == null) {
-            entityManager.persist(paciente);
-            return paciente;
-        } else {
-            return entityManager.merge(paciente);
-        }
-    }
+ public Paciente guardar(Paciente paciente) {
+ if (paciente.getId() == null) {
+ entityManager.persist(paciente);
+ return paciente;
+ } else {
+ return entityManager.merge(paciente);
+ }
+ }
 
-    @Transactional(readOnly = true)
-    public List<Paciente> listarTodos() {
-        return entityManager.createQuery("SELECT p FROM Paciente p ORDER BY p.id ASC", Paciente.class)
-                .getResultList();
-    }
+ @Transactional(readOnly = true)
+ public List<Paciente> listarTodos() {
+ return entityManager.createQuery("SELECT p FROM Paciente p ORDER BY p.id ASC", Paciente.class)
+ .getResultList();
+ }
 
-    @Transactional(readOnly = true)
-    public Optional<Paciente> buscarPorId(Long id) {
-        return Optional.ofNullable(entityManager.find(Paciente.class, id));
-    }
+ @Transactional(readOnly = true)
+ public Optional<Paciente> buscarPorId(Long id) {
+ return Optional.ofNullable(entityManager.find(Paciente.class, id));
+ }
 }
 ```
 
@@ -238,44 +235,44 @@ import java.util.Optional;
 @Transactional
 public class PacienteService {
 
-    private final PacienteRepository pacienteRepository;
+ private final PacienteRepository pacienteRepository;
 
-    public PacienteService(PacienteRepository pacienteRepository) {
-        this.pacienteRepository = pacienteRepository;
-    }
+ public PacienteService(PacienteRepository pacienteRepository) {
+ this.pacienteRepository = pacienteRepository;
+ }
 
-    @Transactional(readOnly = true)
-    public List<Paciente> listarTodos() {
-        return pacienteRepository.findAll();
-    }
+ @Transactional(readOnly = true)
+ public List<Paciente> listarTodos() {
+ return pacienteRepository.findAll();
+ }
 
-    @Transactional(readOnly = true)
-    public Optional<Paciente> buscarPorId(Long id) {
-        return pacienteRepository.findById(id);
-    }
+ @Transactional(readOnly = true)
+ public Optional<Paciente> buscarPorId(Long id) {
+ return pacienteRepository.findById(id);
+ }
 
-    public Paciente registrar(PacienteDto dto) {
-        Paciente paciente = new Paciente();
-        paciente.setDni(dto.getDni());
-        paciente.setNombre(dto.getNombre());
-        paciente.setApellido(dto.getApellido());
-        paciente.setEdad(dto.getEdad());
-        paciente.setNivelHemoglobina(dto.getNivelHemoglobina());
-        return pacienteRepository.save(paciente);
-    }
+ public Paciente registrar(PacienteDto dto) {
+ Paciente paciente = new Paciente();
+ paciente.setDni(dto.getDni());
+ paciente.setNombre(dto.getNombre());
+ paciente.setApellido(dto.getApellido());
+ paciente.setEdad(dto.getEdad());
+ paciente.setNivelHemoglobina(dto.getNivelHemoglobina());
+ return pacienteRepository.save(paciente);
+ }
 
-    public boolean eliminar(Long id) {
-        if (pacienteRepository.existsById(id)) {
-            pacienteRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
+ public boolean eliminar(Long id) {
+ if (pacienteRepository.existsById(id)) {
+ pacienteRepository.deleteById(id);
+ return true;
+ }
+ return false;
+ }
 
-    @Transactional(readOnly = true)
-    public List<Paciente> buscarConAnemia() {
-        return pacienteRepository.buscarConHemoglobinaMenorA(11.0);
-    }
+ @Transactional(readOnly = true)
+ public List<Paciente> buscarConAnemia() {
+ return pacienteRepository.buscarConHemoglobinaMenorA(11.0);
+ }
 }
 ```
 
@@ -301,42 +298,42 @@ import java.util.List;
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class PacienteController {
 
-    private final PacienteService pacienteService;
+ private final PacienteService pacienteService;
 
-    public PacienteController(PacienteService pacienteService) {
-        this.pacienteService = pacienteService;
-    }
+ public PacienteController(PacienteService pacienteService) {
+ this.pacienteService = pacienteService;
+ }
 
-    @GetMapping
-    public ResponseEntity<List<Paciente>> listarTodos() {
-        return ResponseEntity.ok(pacienteService.listarTodos());
-    }
+ @GetMapping
+ public ResponseEntity<List<Paciente>> listarTodos() {
+ return ResponseEntity.ok(pacienteService.listarTodos());
+ }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Paciente> buscarPorId(@PathVariable Long id) {
-        return pacienteService.buscarPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+ @GetMapping("/{id}")
+ public ResponseEntity<Paciente> buscarPorId(@PathVariable Long id) {
+ return pacienteService.buscarPorId(id)
+ .map(ResponseEntity::ok)
+ .orElse(ResponseEntity.notFound().build());
+ }
 
-    @PostMapping
-    public ResponseEntity<Paciente> registrar(@Valid @RequestBody PacienteDto dto) {
-        Paciente creado = pacienteService.registrar(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
-    }
+ @PostMapping
+ public ResponseEntity<Paciente> registrar(@Valid @RequestBody PacienteDto dto) {
+ Paciente creado = pacienteService.registrar(dto);
+ return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+ }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (pacienteService.eliminar(id)) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
+ @DeleteMapping("/{id}")
+ public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+ if (pacienteService.eliminar(id)) {
+ return ResponseEntity.noContent().build();
+ }
+ return ResponseEntity.notFound().build();
+ }
 
-    @GetMapping("/anemia")
-    public ResponseEntity<List<Paciente>> obtenerConAnemia() {
-        return ResponseEntity.ok(pacienteService.buscarConAnemia());
-    }
+ @GetMapping("/anemia")
+ public ResponseEntity<List<Paciente>> obtenerConAnemia() {
+ return ResponseEntity.ok(pacienteService.buscarConAnemia());
+ }
 }
 ```
 
@@ -366,9 +363,9 @@ Invoke-RestMethod -Uri http://localhost:8080/api/pacientes -Method Post -Content
 
 # 3. Probar validación con error (400 Bad Request estructurado)
 try {
-    Invoke-RestMethod -Uri http://localhost:8080/api/pacientes -Method Post -ContentType "application/json" -Body '{"dni":"","nombre":"","apellido":"","edad":-1,"nivelHemoglobina":-5.0}'
+ Invoke-RestMethod -Uri http://localhost:8080/api/pacientes -Method Post -ContentType "application/json" -Body '{"dni":"","nombre":"","apellido":"","edad":-1,"nivelHemoglobina":-5.0}'
 } catch {
-    $_.ErrorDetails.Message
+ $_.ErrorDetails.Message
 }
 ```
 
