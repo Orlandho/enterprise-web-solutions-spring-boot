@@ -221,5 +221,10 @@ Once the application is running (`http://localhost:8080`):
 
 ---
 
+## 📚 Architecture & Extension Guide
+For rapid module onboarding, domain entity creation, and N-Tier extension procedures, see the [Developer Architecture Guide](docs/developer_architecture_guide.md).
+
+---
+
 ## 📄 License
 This project is licensed under the terms of the [MIT License](LICENSE).
