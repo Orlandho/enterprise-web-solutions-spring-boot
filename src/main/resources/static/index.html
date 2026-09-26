@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consola de Verificación Backend - Soluciones Web</title>
+</head>
+<body>
+
+    <h1>Consola de Verificación del Backend</h1>
+    <p>Interfaz HTML nativa para pruebas funcionales de endpoints REST (sin CSS ni diseño visual).</p>
+    <hr>
+
+    <h2>1. Verificación de Estado (Health Check)</h2>
+    <button onclick="verificarSalud()">Consultar /api/saludo</button>
+    <button onclick="verificarSaludDetallada()">Consultar /api/saludo/detallado</button>
+    <hr>
+
+    <h2>2. Autenticación Stateless (JWT)</h2>
+    <form id="formLogin" onsubmit="realizarLogin(event)">
+        <label>Usuario: <input type="text" id="loginUser" value="admin" required></label>
+        <label>Contraseña: <input type="password" id="loginPass" value="admin123" required></label>
+        <button type="submit">Iniciar Sesión (Obtener JWT)</button>
+    </form>
+    <p>Token actual: <span id="jwtDisplay">(No autenticado)</span></p>
+    <hr>
+
+    <h2>3. Gestión de Casos de Negocio</h2>
+    <label for="casoSelect">Seleccionar Caso de Negocio: </label>
+    <select id="casoSelect" onchange="cambiarCaso()">
+        <option value="pacientes">Caso 1: Salud / Posta Médica (Pacientes - Virú)</option>
+        <option value="productos" selected>Caso 2: Almacén / Inventario (Productos)</option>
+        <option value="items">Caso 3: Plantilla Comodín / Activos ODS 9</option>
+    </select>
+    <button onclick="cargarListado()">Listar Registros (GET)</button>
+
+    <h3 id="tituloFormulario">Formulario de Registro / Creación (POST)</h3>
+    <form id="formRegistro" onsubmit="guardarRegistro(event)">
+        <div id="camposDinamicos"></div>
+        <br>
+        <button type="submit">Guardar Registro (POST)</button>
+        <button type="button" onclick="probarValidacionInvalida()">Probar Envío Inválido (Verificar 400 Bad Request)</button>
+    </form>
+
+    <h3>Filtros y Búsquedas Especializadas</h3>
+    <div id="controlesFiltro"></div>
+
+    <h3>Registros Almacenados en la Base de Datos</h3>
+    <table border="1" id="tablaDatos">
+        <thead id="cabeceraTabla"></thead>
+        <tbody id="cuerpoTabla"></tbody>
+    </table>
+    <hr>
+
+    <h2>4. Demostración Manual con EntityManager (Semana 03)</h2>
+    <button onclick="probarEntityManagerListar()">Listar Productos con EntityManager</button>
+    <button onclick="probarEntityManagerCrear()">Insertar Producto de Prueba con EntityManager</button>
+    <hr>
+
+    <h2>5. Visor de Respuestas HTTP y Errores (JSON en Crudo)</h2>
+    <pre id="consolaRespuesta" style="border: 1px solid black; padding: 10px; background-color: #f9f9f9; min-height: 100px;">Esperando peticiones...</pre>
+
+    <script>
+        let casoActual = "productos";
+        let authToken = "";
+
+        const camposConfig = {
+            pacientes: [
+                { id: "dni", label: "DNI (8 dígitos)", type: "text", val: "72345678" },
+                { id: "nombre", label: "Nombre", type: "text", val: "Ana" },
+                { id: "apellido", label: "Apellido", type: "text", val: "Torres" },
+                { id: "edad", label: "Edad", type: "number", val: "5" },
+                { id: "nivelHemoglobina", label: "Nivel de Hemoglobina (g/dL)", type: "number", step: "0.1", val: "10.4" }
+            ],
+            productos: [
+                { id: "codigo", label: "Código SKU", type: "text", val: "PROD-100" },
+                { id: "nombre", label: "Nombre del Producto", type: "text", val: "Teclado Inalámbrico" },
+                { id: "precio", label: "Precio Unitario (S/.)", type: "number", step: "0.01", val: "145.00" },
+                { id: "stock", label: "Stock Disponible", type: "number", val: "3" },
+                { id: "categoria", label: "Categoría", type: "text", val: "Perifericos" }
+            ],
+            items: [
+                { id: "codigoIdentificador", label: "Código Identificador", type: "text", val: "ACT-99" },
+                { id: "denominacion", label: "Denominación / Nombre", type: "text", val: "Impresora Multifuncional" },
+                { id: "valorNumericoPrincipal", label: "Valor Numérico Principal", type: "number", step: "0.01", val: "1200.00" },
+                { id: "cantidadEntera", label: "Cantidad Entera", type: "number", val: "2" }
+            ]
+        };
+
+        function mostrarEnConsola(data, status = 200) {
+            const consola = document.getElementById("consolaRespuesta");
+            consola.textContent = `[HTTP STATUS ${status}]\n` + JSON.stringify(data, null, 2);
+        }
+
+        async function verificarSalud() {
+            try {
+                const res = await fetch("/api/saludo");
+                const text = await res.text();
+                mostrarEnConsola({ mensaje: text }, res.status);
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        async function verificarSaludDetallada() {
+            try {
+                const res = await fetch("/api/saludo/detallado");
+                const json = await res.json();
+                mostrarEnConsola(json, res.status);
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        async function realizarLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById("loginUser").value;
+            const password = document.getElementById("loginPass").value;
+
+            try {
+                const res = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    authToken = data.token;
+                    document.getElementById("jwtDisplay").textContent = "Token obtenido con éxito (Prefijo: Bearer " + data.token.substring(0, 20) + "...)";
+                }
+                mostrarEnConsola(data, res.status);
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        function cambiarCaso() {
+            casoActual = document.getElementById("casoSelect").value;
+            renderizarCampos();
+            renderizarFiltros();
+            cargarListado();
+        }
+
+        function renderizarCampos() {
+            const contenedor = document.getElementById("camposDinamicos");
+            contenedor.innerHTML = "";
+            const campos = camposConfig[casoActual];
+
+            campos.forEach(c => {
+                const p = document.createElement("p");
+                const label = document.createElement("label");
+                label.textContent = c.label + ": ";
+                const input = document.createElement("input");
+                input.type = c.type;
+                input.id = "inp_" + c.id;
+                input.value = c.val;
+                if (c.step) input.step = c.step;
+                label.appendChild(input);
+                p.appendChild(label);
+                contenedor.appendChild(p);
+            });
+        }
+
+        function renderizarFiltros() {
+            const cont = document.getElementById("controlesFiltro");
+            cont.innerHTML = "";
+
+            if (casoActual === "pacientes") {
+                cont.innerHTML = `
+                    <button onclick="filtrarPacientesAnemia()">Filtrar con Anemia (&lt; 11.0 g/dL)</button>
+                    <input type="text" id="buscarApellido" placeholder="Apellido">
+                    <button onclick="buscarPorApellido()">Buscar por Apellido</button>
+                `;
+            } else if (casoActual === "productos") {
+                cont.innerHTML = `
+                    <button onclick="filtrarStockInsuficiente()">Filtrar Stock Insuficiente (&lt; 5)</button>
+                    <input type="number" id="filtroStockMin" placeholder="Stock Mínimo" value="5">
+                    <button onclick="buscarPorStockNamedQuery()">Buscar con NamedQuery (Stock)</button>
+                    <input type="number" id="filtroMinPrecio" placeholder="Precio Mínimo" value="50">
+                    <input type="number" id="filtroMaxPrecio" placeholder="Precio Máximo" value="500">
+                    <button onclick="buscarPorRangoPrecioJPQL()">Buscar por Rango Precio (JPQL)</button>
+                `;
+            } else {
+                cont.innerHTML = `
+                    <input type="number" id="filtroValorMin" placeholder="Valor Mínimo" value="1000">
+                    <button onclick="buscarPorValorMinimo()">Buscar por Valor Mínimo</button>
+                `;
+            }
+        }
+
+        async function cargarListado(endpointPersonalizado = null) {
+            const url = endpointPersonalizado || `/api/${casoActual}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                mostrarEnConsola(data, res.status);
+                dibujarTabla(data);
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        function dibujarTabla(lista) {
+            const thead = document.getElementById("cabeceraTabla");
+            const tbody = document.getElementById("cuerpoTabla");
+            thead.innerHTML = "";
+            tbody.innerHTML = "";
+
+            if (!Array.isArray(lista) || lista.length === 0) {
+                tbody.innerHTML = "<tr><td>No se encontraron registros.</td></tr>";
+                return;
+            }
+
+            const columnas = Object.keys(lista[0]);
+            let headerHtml = "<tr>";
+            columnas.forEach(col => headerHtml += `<th>${col}</th>`);
+            headerHtml += "<th>Acciones</th></tr>";
+            thead.innerHTML = headerHtml;
+
+            lista.forEach(item => {
+                let rowHtml = "<tr>";
+                columnas.forEach(col => {
+                    rowHtml += `<td>${item[col] !== null ? item[col] : ""}</td>`;
+                });
+                rowHtml += `<td><button onclick="eliminarRegistro(${item.id})">Eliminar (DELETE)</button></td>`;
+                rowHtml += "</tr>";
+                tbody.innerHTML += rowHtml;
+            });
+        }
+
+        async function guardarRegistro(e) {
+            e.preventDefault();
+            const campos = camposConfig[casoActual];
+            const payload = {};
+
+            campos.forEach(c => {
+                const val = document.getElementById("inp_" + c.id).value;
+                payload[c.id] = (c.type === "number") ? (c.step ? parseFloat(val) : parseInt(val)) : val;
+            });
+
+            try {
+                const res = await fetch(`/api/${casoActual}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                mostrarEnConsola(data, res.status);
+                cargarListado();
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        async function probarValidacionInvalida() {
+            // Envío con valores en blanco e inválidos para forzar Bean Validation
+            let payloadInvalido = {};
+            if (casoActual === "pacientes") {
+                payloadInvalido = { dni: "123", nombre: "", apellido: "", edad: -5, nivelHemoglobina: 0.2 };
+            } else if (casoActual === "productos") {
+                payloadInvalido = { codigo: "", nombre: "", precio: -10, stock: -1, categoria: "" };
+            } else {
+                payloadInvalido = { codigoIdentificador: "", denominacion: "", valorNumericoPrincipal: -50, cantidadEntera: -2 };
+            }
+
+            try {
+                const res = await fetch(`/api/${casoActual}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payloadInvalido)
+                });
+                const data = await res.json();
+                mostrarEnConsola(data, res.status);
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        async function eliminarRegistro(id) {
+            if (!confirm(`¿Eliminar registro con ID ${id}?`)) return;
+            try {
+                const res = await fetch(`/api/${casoActual}/${id}`, { method: "DELETE" });
+                mostrarEnConsola({ mensaje: `Registro ${id} eliminado con éxito`, httpCode: res.status }, res.status);
+                cargarListado();
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        // Métodos de filtro especializados
+        function filtrarPacientesAnemia() {
+            cargarListado("/api/pacientes/anemia");
+        }
+
+        function buscarPorApellido() {
+            const apellido = document.getElementById("buscarApellido").value;
+            cargarListado(`/api/pacientes/buscar?apellido=${encodeURIComponent(apellido)}`);
+        }
+
+        function filtrarStockInsuficiente() {
+            cargarListado("/api/productos/insuficientes");
+        }
+
+        function buscarPorStockNamedQuery() {
+            const min = document.getElementById("filtroStockMin").value;
+            cargarListado(`/api/productos/stock?minimo=${min}`);
+        }
+
+        function buscarPorRangoPrecioJPQL() {
+            const min = document.getElementById("filtroMinPrecio").value;
+            const max = document.getElementById("filtroMaxPrecio").value;
+            cargarListado(`/api/productos/precio?minimo=${min}&maximo=${max}`);
+        }
+
+        function buscarPorValorMinimo() {
+            const min = document.getElementById("filtroValorMin").value;
+            cargarListado(`/api/items?minimo=${min}`);
+        }
+
+        // Métodos de prueba de EntityManager (Semana 03)
+        async function probarEntityManagerListar() {
+            try {
+                const res = await fetch("/api/legacy/productos");
+                const data = await res.json();
+                mostrarEnConsola(data, res.status);
+                dibujarTabla(data);
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        async function probarEntityManagerCrear() {
+            const dummy = {
+                codigo: "EM-TEST-" + Math.floor(Math.random() * 1000),
+                nombre: "Producto Creado por EntityManager",
+                precio: 350.00,
+                stock: 7,
+                categoria: "PruebaSemana03"
+            };
+            try {
+                const res = await fetch("/api/legacy/productos", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dummy)
+                });
+                const data = await res.json();
+                mostrarEnConsola(data, res.status);
+                probarEntityManagerListar();
+            } catch (err) {
+                mostrarEnConsola({ error: err.message }, 500);
+            }
+        }
+
+        // Inicialización
+        window.onload = function() {
+            renderizarCampos();
+            renderizarFiltros();
+            cargarListado();
+        };
+    </script>
+</body>
+</html>
