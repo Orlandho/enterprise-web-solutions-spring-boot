@@ -371,3 +371,10 @@ try {
     $_.ErrorDetails.Message
 }
 ```
+
+---
+
+### Paso 8: Pruebas con Visual Studio Code (Thunder Client y requests.http)
+
+1. **Colección Thunder Client:** Importar el archivo `thunder-collection_swad_t1.json` en la extensión Thunder Client de VS Code para acceder a toda la suite de peticiones organizadas por módulo.
+2. **Peticiones Interactivas en `requests.http`:** Abrir el archivo `requests.http` en VS Code y hacer clic en `Send Request` sobre cualquier endpoint para inspeccionar status, cabeceras y carga útil JSON en tiempo real.

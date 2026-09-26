@@ -23,8 +23,8 @@ public class PacienteDto {
     private Integer edad;
 
     @NotNull(message = "El nivel de hemoglobina es obligatorio")
-    @DecimalMin(value = "1.0", message = "El nivel de hemoglobina debe ser al menos 1.0")
-    @DecimalMax(value = "25.0", message = "El nivel de hemoglobina no puede exceder 25.0")
+    @DecimalMin(value = "0.1", message = "El nivel de hemoglobina debe ser al menos 0.1")
+    @DecimalMax(value = "150.0", message = "El nivel de hemoglobina no puede exceder 150.0")
     private Double nivelHemoglobina;
 
     public PacienteDto() {

@@ -1,0 +1,114 @@
+### ==============================================================================
+### COLECCIÓN DE PETICIONES HTTP - EVALUACIÓN T1 (SWAD / UPN)
+### Compatible con Thunder Client y REST Client en Visual Studio Code
+### ==============================================================================
+
+@baseUrl = http://localhost:8080
+
+### 1. HEALTH CHECK: Estado simple del Backend (200 OK)
+GET {{baseUrl}}/api/saludo
+Accept: text/plain
+
+### 2. HEALTH CHECK: Estado detallado con alineación ODS 9 (200 OK)
+GET {{baseUrl}}/api/saludo/detallado
+Accept: application/json
+
+### 3. AUTH: Autenticación Stateless JWT (Generación de Bearer Token)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Extraer token de la respuesta anterior
+@authToken = {{login.response.body.token}}
+
+### ==============================================================================
+### CASO 1: SALUD / POSTA MÉDICA VIRÚ (PACIENTES) - SPRING DATA JPA
+### ==============================================================================
+
+### 4. PACIENTES: Listar todos los pacientes (Calcula @Transient estadoAnemia)
+GET {{baseUrl}}/api/pacientes
+Accept: application/json
+
+### 5. PACIENTES: Registrar nuevo paciente válido (Caso Orlando: 67.6 g/dL -> 201 Created)
+POST {{baseUrl}}/api/pacientes
+Content-Type: application/json
+
+{
+  "dni": "12345678",
+  "nombre": "Orlando",
+  "apellido": "Dorival",
+  "edad": 67,
+  "nivelHemoglobina": 67.6
+}
+
+### 6. PACIENTES: Registrar paciente infantil con anemia (< 11.0 g/dL -> 201 Created)
+POST {{baseUrl}}/api/pacientes
+Content-Type: application/json
+
+{
+  "dni": "75432109",
+  "nombre": "Elena",
+  "apellido": "Vargas",
+  "edad": 3,
+  "nivelHemoglobina": 10.4
+}
+
+### 7. PACIENTES: Filtrar pacientes con anemia (Consulta JPQL parametrizada)
+GET {{baseUrl}}/api/pacientes/anemia
+Accept: application/json
+
+### 8. PACIENTES: Probar validación Bean Validation (400 Bad Request estructurado)
+POST {{baseUrl}}/api/pacientes
+Content-Type: application/json
+
+{
+  "dni": "123",
+  "nombre": "",
+  "apellido": "",
+  "edad": -5,
+  "nivelHemoglobina": -2.0
+}
+
+### 9. PACIENTES: Buscar por ID
+GET {{baseUrl}}/api/pacientes/1
+Accept: application/json
+
+### 10. PACIENTES: Eliminar por ID (204 No Content)
+DELETE {{baseUrl}}/api/pacientes/4
+
+### ==============================================================================
+### PERSISTENCIA MANUAL CON ENTITYMANAGER (SEMANA 03)
+### ==============================================================================
+
+### 11. ENTITYMANAGER: Listar pacientes vía EntityManager directo
+GET {{baseUrl}}/api/legacy/pacientes
+Accept: application/json
+
+### 12. ENTITYMANAGER: Guardar paciente vía em.persist()
+POST {{baseUrl}}/api/legacy/pacientes
+Content-Type: application/json
+
+{
+  "dni": "79887766",
+  "nombre": "Pedro",
+  "apellido": "Castro",
+  "edad": 2,
+  "nivelHemoglobina": 11.8
+}
+
+### ==============================================================================
+### CASO 2: PRODUCTOS / ALMACÉN (SEMANAS 01-05)
+### ==============================================================================
+
+### 13. PRODUCTOS: Listar productos
+GET {{baseUrl}}/api/productos
+Accept: application/json
+
+### 14. PRODUCTOS: Filtrar por stock insuficiente (@NamedQuery)
+GET {{baseUrl}}/api/productos/stock?minimo=5
+Accept: application/json

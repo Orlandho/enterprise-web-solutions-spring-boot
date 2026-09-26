@@ -1,0 +1,176 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "T1 - Soluciones Web y Aplicaciones Distribuidas (UPN)",
+  "collectionId": "t1-swad-collection",
+  "dateExported": "2026-09-26",
+  "version": "1.1",
+  "folders": [
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "1. Salud & Estado Base",
+      "sortNum": 10000,
+      "_id": "folder_salud"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "2. Seguridad Stateless JWT",
+      "sortNum": 20000,
+      "_id": "folder_auth"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "3. Caso 1 - Pacientes (Posta Médica)",
+      "sortNum": 30000,
+      "_id": "folder_pacientes"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "4. Persistencia Manual EntityManager",
+      "sortNum": 40000,
+      "_id": "folder_legacy"
+    },
+    {
+      "containerId": "",
+      "created": "2026-09-26",
+      "name": "5. Caso 2 - Productos (Almacén)",
+      "sortNum": 50000,
+      "_id": "folder_productos"
+    }
+  ],
+  "requests": [
+    {
+      "_id": "req_saludo",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_salud",
+      "name": "GET Salud Simple",
+      "url": "http://localhost:8080/api/saludo",
+      "method": "GET",
+      "sortNum": 10000
+    },
+    {
+      "_id": "req_saludo_detallado",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_salud",
+      "name": "GET Salud Detallado (ODS 9)",
+      "url": "http://localhost:8080/api/saludo/detallado",
+      "method": "GET",
+      "sortNum": 10010
+    },
+    {
+      "_id": "req_auth_login",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_auth",
+      "name": "POST Login JWT (admin / admin123)",
+      "url": "http://localhost:8080/api/auth/login",
+      "method": "POST",
+      "sortNum": 20010,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+      }
+    },
+    {
+      "_id": "req_pacientes_listar",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_pacientes",
+      "name": "GET Listar Pacientes (JpaRepository)",
+      "url": "http://localhost:8080/api/pacientes",
+      "method": "GET",
+      "sortNum": 30010
+    },
+    {
+      "_id": "req_pacientes_crear",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_pacientes",
+      "name": "POST Registrar Paciente (Orlando 67.6 g/dL)",
+      "url": "http://localhost:8080/api/pacientes",
+      "method": "POST",
+      "sortNum": 30020,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"dni\": \"12345678\",\n  \"nombre\": \"Orlando\",\n  \"apellido\": \"Dorival\",\n  \"edad\": 67,\n  \"nivelHemoglobina\": 67.6\n}"
+      }
+    },
+    {
+      "_id": "req_pacientes_anemia",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_pacientes",
+      "name": "GET Filtrar con Anemia (< 11.0 g/dL JPQL)",
+      "url": "http://localhost:8080/api/pacientes/anemia",
+      "method": "GET",
+      "sortNum": 30030
+    },
+    {
+      "_id": "req_pacientes_invalid",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_pacientes",
+      "name": "POST Probar Validación 400 Bad Request",
+      "url": "http://localhost:8080/api/pacientes",
+      "method": "POST",
+      "sortNum": 30040,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"dni\": \"\",\n  \"nombre\": \"\",\n  \"apellido\": \"\",\n  \"edad\": -5,\n  \"nivelHemoglobina\": -2.0\n}"
+      }
+    },
+    {
+      "_id": "req_legacy_listar",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_legacy",
+      "name": "GET Listar Pacientes con EntityManager",
+      "url": "http://localhost:8080/api/legacy/pacientes",
+      "method": "GET",
+      "sortNum": 40010
+    },
+    {
+      "_id": "req_legacy_crear",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_legacy",
+      "name": "POST Guardar con EntityManager",
+      "url": "http://localhost:8080/api/legacy/pacientes",
+      "method": "POST",
+      "sortNum": 40020,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"dni\": \"79887766\",\n  \"nombre\": \"Pedro\",\n  \"apellido\": \"Castro\",\n  \"edad\": 2,\n  \"nivelHemoglobina\": 11.8\n}"
+      }
+    },
+    {
+      "_id": "req_productos_listar",
+      "colId": "t1-swad-collection",
+      "containerId": "folder_productos",
+      "name": "GET Listar Productos",
+      "url": "http://localhost:8080/api/productos",
+      "method": "GET",
+      "sortNum": 50010
+    }
+  ]
+}

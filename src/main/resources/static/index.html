@@ -40,6 +40,7 @@
         <button type="submit">Guardar Registro (POST)</button>
         <button type="button" onclick="probarValidacionInvalida()">Probar Envío Inválido (Verificar 400 Bad Request)</button>
     </form>
+    <div id="mensajeEstadoFormulario"></div>
 
     <h3>Filtros y Búsquedas Especializadas</h3>
     <div id="controlesFiltro"></div>
@@ -135,6 +136,8 @@
 
         function cambiarCaso() {
             casoActual = document.getElementById("casoSelect").value;
+            const statusDiv = document.getElementById("mensajeEstadoFormulario");
+            if (statusDiv) statusDiv.innerHTML = "";
             renderizarCampos();
             renderizarFiltros();
             cargarListado();
@@ -231,6 +234,7 @@
             e.preventDefault();
             const campos = camposConfig[casoActual];
             const payload = {};
+            const statusDiv = document.getElementById("mensajeEstadoFormulario");
 
             campos.forEach(c => {
                 const val = document.getElementById("inp_" + c.id).value;
@@ -245,17 +249,29 @@
                 });
                 const data = await res.json();
                 mostrarEnConsola(data, res.status);
-                cargarListado();
+
+                if (res.ok) {
+                    statusDiv.innerHTML = `<p><b>✅ [HTTP ${res.status} Creado] Registro guardado con éxito (ID: ${data.id || 'N/A'}${data.estadoAnemia ? ', Diagnóstico: ' + data.estadoAnemia : ''}${data.estadoStock ? ', Stock: ' + data.estadoStock : ''})</b></p>`;
+                    cargarListado();
+                } else {
+                    let detalle = "";
+                    if (data.fieldErrors) {
+                        detalle = "<ul>" + Object.entries(data.fieldErrors).map(([campo, err]) => `<li><b>${campo}:</b> ${err}</li>`).join("") + "</ul>";
+                    }
+                    statusDiv.innerHTML = `<p><b>❌ [HTTP ${res.status} ${data.error || 'Error'}] ${data.message || 'No se pudo guardar el registro'}</b></p>${detalle}`;
+                }
             } catch (err) {
+                if (statusDiv) statusDiv.innerHTML = `<p><b>❌ Error de conexión o servidor:</b> ${err.message}</p>`;
                 mostrarEnConsola({ error: err.message }, 500);
             }
         }
 
         async function probarValidacionInvalida() {
+            const statusDiv = document.getElementById("mensajeEstadoFormulario");
             // Envío con valores en blanco e inválidos para forzar Bean Validation
             let payloadInvalido = {};
             if (casoActual === "pacientes") {
-                payloadInvalido = { dni: "123", nombre: "", apellido: "", edad: -5, nivelHemoglobina: 0.2 };
+                payloadInvalido = { dni: "123", nombre: "", apellido: "", edad: -5, nivelHemoglobina: -2.0 };
             } else if (casoActual === "productos") {
                 payloadInvalido = { codigo: "", nombre: "", precio: -10, stock: -1, categoria: "" };
             } else {
@@ -270,6 +286,13 @@
                 });
                 const data = await res.json();
                 mostrarEnConsola(data, res.status);
+                if (statusDiv) {
+                    let detalle = "";
+                    if (data.fieldErrors) {
+                        detalle = "<ul>" + Object.entries(data.fieldErrors).map(([campo, err]) => `<li><b>${campo}:</b> ${err}</li>`).join("") + "</ul>";
+                    }
+                    statusDiv.innerHTML = `<p><b>⚠️ [HTTP ${res.status} ${data.error}] Validación Bean Validation disparada correctamente:</b></p>${detalle}`;
+                }
             } catch (err) {
                 mostrarEnConsola({ error: err.message }, 500);
             }
