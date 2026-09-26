@@ -16,11 +16,8 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Sistema de Gestión de Pacientes y Detección de Anemia - API REST")
+                        .title("API RESTful - Backend Spring Boot")
                         .version("1.0.0")
-                        .description("Solución backend modular desarrollada con Spring Boot 3 y Java 17 LTS " +
-                                "para la Evaluación T1 de Soluciones Web y Aplicaciones Distribuidas (SIST1402A) - UPN. " +
-                                "Implementa arquitectura N-Capas, persistencia dual (Spring Data JPA y EntityManager), " +
-                                "Bean Validation declarativo, manejo global estructurado de excepciones y seguridad stateless."));
+                        .description("Documentación interactiva de servicios web y endpoints RESTful desarrollada con Spring Boot y Java 17 LTS."));
     }
 }
